@@ -55,6 +55,14 @@ int main() {
 	sf::RenderWindow window(sf::VideoMode(m * 50, n * 50), "CCFinal23");
 	window.setFramerateLimit(60);
 
+	sf::Font font;
+	assert(font.loadFromFile("Font/consolas.ttf"));
+
+	sf::Text text;
+	text.setFont(font);
+	text.setCharacterSize(30);
+	text.setFillColor(sf::Color::Black);
+
 	auto inside = [&](int x, int y) -> bool {
 		return 0 <= x && x <= n - 1 && 0 <= y && y <= m - 1;
 	};
@@ -82,7 +90,12 @@ int main() {
 	while (window.isOpen()) {
 		if (timer % time_stop == 0) {
 			t++;
+			std::vector <std::pair <int, int> > new_move = last_move;
 			for (int i = 0; i < p; i++) {
+				std::cout << "========\n";
+				std::cout << "PLAYER " << char(i + 'A') << "\n";
+				std::cout << "========\n";
+
 				if (!alive[i]) {
 					continue;
 				}
@@ -118,23 +131,19 @@ int main() {
 
 				fout.close();
 
-				std::cerr << "Running 1\n";
 				command = "move ";
 				command.push_back(i + 'A');
 				command += "\\bot.exe";
 				system(command.c_str());
-				
-				std::cerr << "Running 2\n";
+
 				command = "move ";
 				command.push_back(i + 'A');
 				command += "\\status.dat";
 				system(command.c_str());
 
-				std::cerr << "Running 4\n";
 				command = "bot.exe";
 				system(command.c_str());
 
-				std::cerr << "Running 5\n";
 				command = "move bot.exe ";
 				command.push_back(i + 'A');
 				system(command.c_str());
@@ -143,12 +152,12 @@ int main() {
 				command.push_back(i + 'A');
 				system(command.c_str());
 
-				std::cerr << "Running 6\n";
-				fin.open("map.out"); // need to fix to "move.out"
+				fin.open("move.out"); // need to fix to "move.out"
 				assert(fin.good());
 
 				int x, y;
-				fin >> x >> y;
+				assert(fin >> x >> y);
+				std::cerr << "RUNNING " << x << " " << y << "\n";
 				fin.close();
 
 				if (last_move[i].first != -1) {
@@ -160,18 +169,20 @@ int main() {
 						do {
 							x = rand <int>(0, n - 1);
 							y = rand <int>(0, m - 1);
-						} while (map[x][y] != '#');
+						} while (map[x][y] == '#');
 
-						last_move[i] = std::make_pair(x, y);
+						new_move[i] = std::make_pair(x, y);
 					} else {
 						alive[i] = false;
 					}
 				} else {
-					last_move[i] = std::make_pair(x, y);
+					new_move[i] = std::make_pair(x, y);
 				}
 
 				std::cerr << last_move[i].first << " " << last_move[i].second << "\n";
 			}
+
+			last_move = new_move;
 
 			for (int i = 0; i < p; i++) {
 				if (!alive[i]) {
@@ -216,6 +227,13 @@ int main() {
 			}
 		}
 
+		for (int i = 0; i < p; i++) {
+			text.setString(std::string(1, i + 'A'));
+			text.setOrigin(text.getLocalBounds().left + text.getLocalBounds().width / 2, text.getLocalBounds().top + text.getLocalBounds().height / 2);
+			text.setPosition(last_move[i].second * 50 + 25, last_move[i].first * 50 + 25);
+			window.draw(text);
+		}
+
 		window.display();
 
 		timer++;
@@ -233,10 +251,10 @@ int main() {
 				}
 
 				command = "del map.inp";
-				system(command.c_str());
+				//system(command.c_str());
 
-				command = "del map.out";
-				system(command.c_str());
+				command = "del move.out";
+				//system(command.c_str());
 
 				return 0;
 			}
