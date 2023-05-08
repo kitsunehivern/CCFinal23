@@ -130,6 +130,9 @@
     <ClCompile Include="Bot1\Bot1.cpp" />
     <ClCompile Include="CCFinal23.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="x64\Debug\MAP.INP" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
