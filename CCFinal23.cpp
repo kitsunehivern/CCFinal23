@@ -228,10 +228,12 @@ int main() {
 		}
 
 		for (int i = 0; i < p; i++) {
-			text.setString(std::string(1, i + 'A'));
-			text.setOrigin(text.getLocalBounds().left + text.getLocalBounds().width / 2, text.getLocalBounds().top + text.getLocalBounds().height / 2);
-			text.setPosition(last_move[i].second * 50 + 25, last_move[i].first * 50 + 25);
-			window.draw(text);
+			if (alive[i]) {
+				text.setString(std::string(1, i + 'A'));
+				text.setOrigin(text.getLocalBounds().left + text.getLocalBounds().width / 2, text.getLocalBounds().top + text.getLocalBounds().height / 2);
+				text.setPosition(last_move[i].second * 50 + 25, last_move[i].first * 50 + 25);
+				window.draw(text);
+			}
 		}
 
 		window.display();
