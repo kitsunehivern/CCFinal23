@@ -12,7 +12,10 @@
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
-Bot.cpp
+Bot1.cpp
+MAP.INP
+MAP.OUT
+STATE.DAT
 
 # Mono auto generated files
 mono_crash.*
