@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="Bot1\Bot1.cpp" />
     <ClCompile Include="CCFinal23.cpp" />
+    <ClCompile Include="RealBot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="x64\Debug\MAP.INP" />
