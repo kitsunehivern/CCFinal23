@@ -365,3 +365,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /include/SFML
 /lib
+/RealBot.cpp
