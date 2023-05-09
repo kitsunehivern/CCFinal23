@@ -1,8 +1,13 @@
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include<ctime>
+#include<bits/stdc++.h>
 using namespace std;
+
+std::mt19937 mt_rng(std::chrono::steady_clock::now().time_since_epoch().count());
+
+template <typename _Tp>
+_Tp rand(_Tp l, _Tp r) {
+	assert(l <= r);
+	return std::uniform_int_distribution <_Tp> (l, r) (mt_rng);
+}
 
 struct Bot {
 	int x, y;
@@ -55,7 +60,7 @@ bool checkRange(const Bot& bot) {
 	for (char i = 'a'; i <= 'd'; i++) {
 		check = check && (board[bot.x][bot.y] != i); //tiles that have been captured, got shrinked
 	}
-	check = check && checkShrink(bot); //die because of shrinking 
+	check = check && checkShrink(bot); //die because of shrinking
 	return check;
 }
 
@@ -65,6 +70,7 @@ void move(ofstream& fo, ofstream& dat_out) {
 		dat_out << lastMov << '\n';
 		dat_out << myBot.x << ' ' << myBot.y << '\n';
 		fo << myBot.x + nX[lastMov] << ' ' << myBot.y + nY[lastMov];
+		return;
 	}
 	for (int i = (lastMov + 1) % 4; i != lastMov; i = (i + 1) % 4) {
 		if (myBot.x + nX[i] == lastX && myBot.y + nY[i] == lastY) { mov = i; continue; } //avoid going back
@@ -80,6 +86,7 @@ void move(ofstream& fo, ofstream& dat_out) {
 		dat_out << mov << '\n';
 		dat_out << myBot.x << ' ' << myBot.y << '\n';
 		fo << lastX << ' ' << lastY;
+		return;
 	}
 
 	//stand still
@@ -118,7 +125,7 @@ int main() {
 	dat_input.close();
 
 	ofstream dat_output;
-	dat_output.open("state.dat");
+	dat_output.open("state.dat", ofstream::out | ofstream::trunc);
 
 	int x, y;
 	char name;
@@ -140,8 +147,7 @@ int main() {
 	}
 
 	if (myBot.x < 0) {
-		srand(time(NULL));
-		int x = rand() % n, y = rand() % m;
+		int x = rand <int> (0, n - 1), y = rand <int> (0, m - 1);
 		fo << x << ' ' << y << '\n';
 		dat_output << 4 << '\n';
 		dat_output << x << ' ' << y << '\n';

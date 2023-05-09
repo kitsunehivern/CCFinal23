@@ -52,7 +52,7 @@ int main() {
 	
 	fin.close();
 
-	sf::RenderWindow window(sf::VideoMode((m + 1) * 50,  (n + 1) * 50), "CCFinal23");
+	sf::RenderWindow window(sf::VideoMode((m + 1) * 50,  (n + 1) * 50), "CCFinal23", sf::Style::Close);
 	window.setFramerateLimit(60);
 
 	sf::Font font;
@@ -85,11 +85,11 @@ int main() {
 	
 	std::vector <bool> alive(p, true);
 	std::vector <std::pair <int, int> > last_move(p, std::make_pair(-1, -1));
-	const int time_stop = 1 * 60;
+	const int time_stop = 1;
 	
 	int timer = 0, t = -1;
 	while (window.isOpen()) {
-		if (timer % time_stop == 0) {
+		if (std::count(alive.begin(), alive.end(), true) && timer % time_stop == 0) {
 			t++;
 			std::cout << "======================\n";
 			std::cout << "TURN " << t << "\n";
@@ -172,21 +172,20 @@ int main() {
 				if (last_move[i].first != -1) {
 					//assert(abs(x - last_move[i].first) + abs(y - last_move[i].second) <= 1);
 					if (abs(x - last_move[i].first) + abs(y - last_move[i].second) > 1) {
-						alive[i] = false;
 						continue;
 					}
 				}
 
-				if (!inside(x, y) || map[x][y] == '#' || ('a' <= map[x][y] && map[x][y] <= 'd')) {
+				if (!inside(x, y) || map[x][y] == 0 || map[x][y] == -5 || (-4 <= map[x][y] && map[x][y] <= -1)) {
 					if (t == 0) {
 						do {
 							x = rand <int>(0, n - 1);
 							y = rand <int>(0, m - 1);
-						} while (map[x][y] == '#');
+						} while (map[x][y] == 0);
 
 						new_move[i] = std::make_pair(x, y);
 					} else {
-						alive[i] = false;
+						continue;
 					}
 				} else {
 					new_move[i] = std::make_pair(x, y);
@@ -235,6 +234,17 @@ int main() {
 						}
 					}
 				}
+			}
+
+			for (int z = 0; z < p; z++) {
+				int cnt = 0;
+				for (int i = 0; i < n; i++) {
+					for (int j = 0; j < m; j++) {
+						cnt += (abs(map[i][j]) == z + 1);
+					}
+				}
+
+				std::cout << "Player " << char(z + 'A') << ": " << cnt << "\n";
 			}
 		}
 
@@ -304,7 +314,9 @@ int main() {
 
 		window.display();
 
-		timer++;
+		if (std::count(alive.begin(), alive.end(), true)) {
+			timer++;
+		}
 
 		sf::Event event;
 		while (window.pollEvent(event)) {

@@ -16,7 +16,7 @@ int main() {
 
     int n = 2 * rand <int> (5, 10) + 1;
     int m = 2 * rand <int> (5, 10) + 1;
-    int k = rand <int> (2, 5);
+    int k = rand <int> (5, 20);
     int p = 4;
 
     fout << n << ' ' << m << ' ' << k << " " << p << "\n";
