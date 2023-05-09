@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <tuple>
 #include <vector>
+#include <queue>
 #include <string>
 #include <assert.h>
 #include <random>
@@ -85,7 +86,7 @@ int main() {
 	
 	std::vector <bool> alive(p, true);
 	std::vector <std::pair <int, int> > last_move(p, std::make_pair(-1, -1));
-	const int time_stop = 1;
+	const int time_stop = 60;
 	
 	int timer = 0, t = -1;
 	while (window.isOpen()) {
@@ -213,6 +214,63 @@ int main() {
 
 				if (!check) {
 					map[last_move[i].first][last_move[i].second] = i + 1;
+				}
+			}
+
+			auto bfs = [&](int s, int t, int c) -> bool {
+				int nX[] = {-1, 1, 0, 0};
+				int nY[] = {0, 0, -1, 1};
+
+				std::queue<std::pair <int, int> > q;
+				std::vector <std::vector <bool> > vis(n, std::vector <bool> (m));
+				q.push({ s, t });
+				vis[s][t] = false;
+				while (!q.empty()) {
+					int u = q.front().first;
+					int v = q.front().second;
+
+					if (u - 1 < 0 || u + 1 >= n || v - 1 < 0 || v + 1 >= m) {
+						return false;
+					}
+
+					q.pop();
+					for (int i = 0; i < 4; i++) {
+						int x = u + nX[i];
+						int y = v + nY[i];
+
+						if (!vis[x][y] && inside(x, y) && abs(map[x][y]) != c) {
+							vis[x][y] = true;
+							q.push({ x, y });
+						}
+					}
+				}
+
+				return true;
+			};
+
+			for (int z = 0; z < p; z++) {
+				std::vector <std::pair <int, int> > pending;
+				for (int i = 0; i < n; i++) {
+					for (int j = 0; j < m; j++) {
+						if (map[i][j] > 0 && map[i][j] != z + 1 && bfs(i, j, z + 1)) {
+							pending.push_back({i, j});
+						}
+					}
+
+				}
+
+				for (auto i : pending) {
+					for (int zz = 0; zz < p; zz++) {
+						if (zz == z) {
+							continue;
+						}
+
+						if (i == last_move[zz]) {
+							alive[zz] = false;
+						}
+					}
+
+					map[i.first][i.second] = z + 1;
 				}
 			}
 
