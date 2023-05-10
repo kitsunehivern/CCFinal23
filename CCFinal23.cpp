@@ -53,7 +53,7 @@ int main() {
 	
 	fin.close();
 
-	sf::RenderWindow window(sf::VideoMode((m + 1) * 50,  (n + 1) * 50), "CCFinal23", sf::Style::Close);
+	sf::RenderWindow window(sf::VideoMode((m + 1) * 40,  (n + 1) * 40), "CCFinal23", sf::Style::Close);
 	window.setFramerateLimit(60);
 
 	sf::Font font;
@@ -61,7 +61,7 @@ int main() {
 
 	sf::Text text;
 	text.setFont(font);
-	text.setCharacterSize(30);
+	text.setCharacterSize(20);
 	text.setFillColor(sf::Color::Black);
 
 	auto inside = [&](int x, int y) -> bool {
@@ -86,7 +86,7 @@ int main() {
 	
 	std::vector <bool> alive(p, true);
 	std::vector <std::pair <int, int> > last_move(p, std::make_pair(-1, -1));
-	const int time_stop = 60;
+	const int time_stop = 1;
 	
 	int timer = 0, t = -1;
 	while (window.isOpen()) {
@@ -308,7 +308,7 @@ int main() {
 
 		window.clear();
 
-		sf::RectangleShape rect(sf::Vector2f(50, 50));
+		sf::RectangleShape rect(sf::Vector2f(40, 40));
 		rect.setFillColor(sf::Color::White);
 		rect.setOutlineThickness(2);
 		rect.setOutlineColor(sf::Color::Black);
@@ -317,19 +317,19 @@ int main() {
 
 		text.setString(std::to_string(t));
 		text.setOrigin(text.getLocalBounds().left + text.getLocalBounds().width / 2, text.getLocalBounds().top + text.getLocalBounds().height / 2);
-		text.setPosition(25, 25);
+		text.setPosition(20, 20);
 		window.draw(text);
 
 		for (int i = 0; i < n; i++) {
 			rect.setFillColor(sf::Color::White);
 			rect.setOutlineThickness(2);
 			rect.setOutlineColor(sf::Color::Black);
-			rect.setPosition(0, (i + 1) * 50);
+			rect.setPosition(0, (i + 1) * 40);
 			window.draw(rect);
 
 			text.setString(std::to_string(i));
 			text.setOrigin(text.getLocalBounds().left + text.getLocalBounds().width / 2, text.getLocalBounds().top + text.getLocalBounds().height / 2);
-			text.setPosition(25, (i + 1) * 50 + 25);
+			text.setPosition(20, (i + 1) * 40 + 20);
 			window.draw(text);
 		}
 
@@ -337,12 +337,12 @@ int main() {
 			rect.setFillColor(sf::Color::White);
 			rect.setOutlineThickness(2);
 			rect.setOutlineColor(sf::Color::Black);
-			rect.setPosition((j + 1) * 50, 0);
+			rect.setPosition((j + 1) * 40, 0);
 			window.draw(rect);
 
 			text.setString(std::to_string(j));
 			text.setOrigin(text.getLocalBounds().left + text.getLocalBounds().width / 2, text.getLocalBounds().top + text.getLocalBounds().height / 2);
-			text.setPosition((j + 1) * 50 + 25, 25);
+			text.setPosition((j + 1) * 40 + 20, 20);
 			window.draw(text);
 		}
 
@@ -358,7 +358,7 @@ int main() {
 
 				rect.setOutlineThickness(2);
 				rect.setOutlineColor(sf::Color::Black);
-				rect.setPosition((j + 1) * 50, (i + 1) * 50);
+				rect.setPosition((j + 1) * 40, (i + 1) * 40);
 				window.draw(rect);
 			}
 		}
@@ -366,7 +366,7 @@ int main() {
 		for (int i = 0; i < p; i++) {
 			text.setString(std::string(1, i + (alive[i] ? 'A' : 'a')));
 			text.setOrigin(text.getLocalBounds().left + text.getLocalBounds().width / 2, text.getLocalBounds().top + text.getLocalBounds().height / 2);
-			text.setPosition((last_move[i].second + 1) * 50 + 25, (last_move[i].first + 1) * 50 + 25);
+			text.setPosition((last_move[i].second + 1) * 40 + 20, (last_move[i].first + 1) * 40 + 20);
 			window.draw(text);
 		}
 
