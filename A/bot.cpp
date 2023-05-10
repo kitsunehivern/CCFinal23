@@ -45,7 +45,7 @@ bool check_shrink(const Bot& bot) {
 	int border = get_border_srink();
 	if (bot.x == border || bot.x == (n - border - 1) ||
 		bot.y == border || bot.y == (m - border - 1))
-		return (p % k == 0);
+		return (p % k != 0);
 
 	return true;
 }
