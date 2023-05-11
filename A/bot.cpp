@@ -143,7 +143,10 @@ Bot bfs_move() {
 			continue;
 		}
 		//enemy tiles
-		else if (board[tmp.x][tmp.y] >= 'A' && board[tmp.x][tmp.y] <= 'D') {
+		else if (
+			((board[res.x][res.y] == '.') || board[res.x][res.y] == myBot.name) && 
+			(board[tmp.x][tmp.y]) >= 'A' && (board[tmp.x][tmp.y] <= 'D') && board[tmp.x][tmp.y] != myBot.name)
+		{
 			res = tmp;
 		}
 	}
@@ -261,15 +264,6 @@ int main() {
 	}
 	else {
 		area_length = 4;
-		//cout << "Succ to read yo shit\n";
-		if ((p % area_length == 0) || (lastMov == 4)) {
-			if (lastMov == 4) {
-				lastMov = 0;
-			}
-			else {
-				lastMov = (lastMov + 1) % 4; //just in case it stuck in one direction for too long
-			}
-		}
 
 		//panic mode
 		if (area_length > 3 && (min(n, m) - get_border_srink() <= min(n, m) / 2)) {
@@ -278,6 +272,15 @@ int main() {
 
 		if (area_length > 2 && (min(n, m) - get_border_srink() <= min(n, m) / 3)) {
 			area_length = 2;
+		}
+
+		if ((p % area_length == 0) || (lastMov == 4)) {
+			if (lastMov == 4) {
+				lastMov = 0;
+			}
+			else {
+				lastMov = (lastMov + 1) % 4; //just in case it stuck in one direction for too long
+			}
 		}
 		
 		dat_input >> lastX >> lastY;
