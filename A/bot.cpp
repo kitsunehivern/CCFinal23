@@ -113,8 +113,13 @@ Bot bfs_move() {
 			continue;
 		}
 
+		int border = get_border_srink();
 		//safer option first
-		if (get_dist_from_border(tmp.x, tmp.y) < get_dist_from_border(res.x, res.y)) {
+		if (
+			(min(tmp.x - border, n - tmp.x - border) > min(res.x - border, n - res.x - border)) && 
+			(min(tmp.y - border, m - tmp.y - border) > min(res.y - border, m - res.y - border))
+		) 
+		{
 			res = tmp;
 			continue;
 		}
@@ -166,58 +171,73 @@ void move(ofstream& fo, ofstream& dat_out) {
 	//prioritize gtfo of the border
 	int nxt_mov = -1;
 	for (int i = 0; i < 4; i++) {
-		int X = myBot.x + nX[i];
-		int Y = myBot.y + nY[i];
+	 	int X = myBot.x + nX[i];
+	 	int Y = myBot.y + nY[i];
 
-		//prioritize furthest from border
-		if (check_range(Bot(X, Y, myBot.name)) && 
-			((nxt_mov == -1) || 
-			(get_dist_from_border(X, Y) > get_dist_from_border(myBot.x + nX[nxt_mov], myBot.y + nY[nxt_mov]))
-			))
-		{
+	// 	//prioritize furthest from border
+	 	if (check_range(Bot(X, Y, myBot.name)) && 
+ 		((nxt_mov == -1) || 
+	 		(get_dist_from_border(X, Y) > get_dist_from_border(myBot.x + nX[nxt_mov], myBot.y + nY[nxt_mov]))
+	 		))
+	 	{
 
-			//avoid going back if half of the map is still around
-			if (X == lastX && Y == lastY) {
-				backward_move = i;
-				continue;
-			}
+	// 		//avoid going back if half of the map is still around
+	 		if (X == lastX && Y == lastY) {
+	 			backward_move = i;
+	 			continue;
+	 		}
 
-			nxt_mov = i;
+	// 		nxt_mov = i;
 		}
 	}
 	
-	//haven't cover the backward case in here
-	if (nxt_mov != -1) {
-		fo << myBot.x + nX[nxt_mov] << ' ' << myBot.y + nY[nxt_mov] << '\n';
-		dat_out << nxt_mov << '\n';
-		dat_out << myBot.x << ' ' << myBot.y << '\n';
-		return;
-	}
+	// //haven't cover the backward case in here
+	// if (nxt_mov != -1) {
+	// 	fo << myBot.x + nX[nxt_mov] << ' ' << myBot.y + nY[nxt_mov] << '\n';
+	// 	dat_out << nxt_mov << '\n';
+	// 	dat_out << myBot.x << ' ' << myBot.y << '\n';
+	// 	return;
+	// }
 
 	//desperate move no.1
 	Bot res = bfs_move();
 	if (res.x != -1) {
-		int mov = 3;
+		int mov = -1;
 		for (int i = 3; i >= 0; i--) {
-			
+			if (i == backward_move) continue;
 			int X = myBot.x + nX[i];
 			int Y = myBot.y + nY[i];
  
-			if (check_range(Bot(X, Y, myBot.name)) && 
-				get_dist_from_cur(res.x - nX[i], res.y - nY[i]) < 
-				get_dist_from_cur(res.x - nX[mov], res.y - nY[mov])
-				) {
-				mov = i;
+			if (check_range(Bot(X, Y, myBot.name)))
+			{
+				if (mov == -1) {
+					mov = i;
+					continue;
+				}
+
+				//closest one
+				if (get_dist_from_cur(res.x - nX[i], res.y - nY[i]) < 
+				get_dist_from_cur(res.x - nX[mov], res.y - nY[mov])) {
+					mov = i;
+					continue;
+				}
+
+				//maybe a change of direction
+				if ((lastMov % 2) != (i % 2)) {
+					mov = i;
+				}
 			}
 		}
-		fo << myBot.x + nX[mov] << ' ' << myBot.y + nY[mov] << '\n';
-		dat_out << mov << '\n';
-		dat_out << myBot.x << ' ' << myBot.y << '\n';
-		return;
+		if (mov != -1) {
+			fo << myBot.x + nX[mov] << ' ' << myBot.y + nY[mov] << '\n';
+			dat_out << mov << '\n';
+			dat_out << myBot.x << ' ' << myBot.y << '\n';
+			return;
+		}
 	}
 
 	//backward case
-	if ((min(n, m) - get_border_srink() <= min(n, m) / 2) && backward_move != -1) {
+	if (backward_move != -1) {
 		fo << myBot.x + nX[backward_move] << ' ' << myBot.y + nY[backward_move] << '\n';
 		dat_out << nxt_mov << '\n';
 		dat_out << myBot.x << ' ' << myBot.y << '\n';
@@ -256,7 +276,7 @@ int main() {
 		lastX = lastY = 0;
 	}
 	else {
-		area_length = 3;
+		area_length = 4;
 		//cout << "Succ to read yo shit\n";
 		if ((p % area_length == 0) || (lastMov == 4)) {
 			if (lastMov == 4) {
@@ -268,6 +288,9 @@ int main() {
 		}
 
 		//panic mode
+		if (area_length > 3 && (min(n, m) - get_border_srink() <= min(n, m) / 2)) {
+			area_length = 3;
+		}
 		if (area_length > 2 && (min(n, m) - get_border_srink() <= min(n, m) / 3)) {
 			area_length = 2;
 		}
