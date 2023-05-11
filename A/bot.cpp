@@ -211,6 +211,13 @@ void move(ofstream& fo, ofstream& dat_out) {
 				if (get_dist_from_cur(X, Y) < get_dist_from_cur(myBot.x + nX[mov], myBot.y + nY[mov])) {
 					mov = i;
 				}
+				else if (get_dist_from_cur(X, Y) == get_dist_from_cur(myBot.x + nX[mov], myBot.y + nY[mov])) 
+				{
+					//go a different direction  
+					if ((mov % 2 != i % 2) && (i % 2 != lastMov % 2)) {
+						mov = i;
+					} 
+				}
 			}
 		
 		}
