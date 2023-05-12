@@ -34,8 +34,8 @@ int main() {
 	// read inital map
 	fin.open("initial_map.inp");
 	assert(fin.good());
-	int n, m, k, p;
-	fin >> n >> m >> k >> p;
+	int n, m, k;
+	fin >> n >> m >> k;
 
 	std::vector <std::vector <int> > map(n, std::vector <int> (m));
 	for (int i = 0; i < n; i++) {
@@ -52,6 +52,15 @@ int main() {
 	}
 	
 	fin.close();
+
+	std::cout << "Enter number of players: ";
+	int p; std::cin >> p;
+
+	std::vector <std::string> player_name(p);
+	for (int i = 0; i < p; i++) {
+		std::cout << "Enter name for player " << char(i + 'A') << ": ";
+		std::cin >> player_name[i];
+	}
 
 	sf::RenderWindow window(sf::VideoMode((m + 1) * 40,  (n + 1) * 40), "CCFinal23", sf::Style::Close);
 	window.setFramerateLimit(60);
@@ -136,25 +145,26 @@ int main() {
 
 				fout.close();
 
-				command = "move ";
-				command.push_back(i + 'A');
+				command = "move " + player_name[i];
 				command += "\\bot.exe";
 				system(command.c_str());
 
-				command = "move ";
-				command.push_back(i + 'A');
+				command = "move " + player_name[i];
 				command += "\\state.dat";
 				system(command.c_str());
+
+				auto start = std::chrono::high_resolution_clock::now();
 
 				command = "bot.exe";
 				system(command.c_str());
 
-				command = "move bot.exe ";
-				command.push_back(i + 'A');
+				auto finish = std::chrono::high_resolution_clock::now();
+				std::cerr << "Time used: " << std::chrono::duration_cast <std::chrono::milliseconds> (finish - start).count() << " (ms)\n";
+
+				command = "move bot.exe " + player_name[i];
 				system(command.c_str());
 
-				command = "move state.dat ";
-				command.push_back(i + 'A');
+				command = "move state.dat " + player_name[i];
 				system(command.c_str());
 
 				fin.open("move.out");
@@ -380,24 +390,22 @@ int main() {
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed) {
 				window.close();
-				
-				for (int i = 0; i < p; i++) {
-					command = "del ";
-					command.push_back(i + 'A');
-					command += "\\state.dat";
-					system(command.c_str());
-				}
-
-				command = "del map.inp";
-				system(command.c_str());
-
-				command = "del move.out";
-				system(command.c_str());
-
-				return 0;
 			}
 		}
 	}
+
+	for (int i = 0; i < p; i++) {
+		command = "del " + player_name[i];
+		command += "\\state.dat";
+		system(command.c_str());
+	}
+
+	command = "del map.inp";
+	system(command.c_str());
+
+	command = "del move.out";
+	system(command.c_str());
+
 
 	return 0;
 }

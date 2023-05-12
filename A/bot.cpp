@@ -1,9 +1,13 @@
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include<ctime>
-#include<queue>
+#include<bits/stdc++.h>
 using namespace std;
+
+std::mt19937 mt_rng(std::chrono::steady_clock::now().time_since_epoch().count());
+
+template <typename _Tp>
+_Tp rand(_Tp l, _Tp r) {
+	assert(l <= r);
+	return std::uniform_int_distribution <_Tp> (l, r) (mt_rng);
+}
 
 struct Bot {
 	int x, y;
@@ -59,7 +63,7 @@ bool check_range(const Bot& bot) {
 	for (char i = 'a'; i <= 'd'; i++) {
 		check = check && (board[bot.x][bot.y] != i); //tiles that have been captured, got shrinked
 	}
-	check = check && check_shrink(bot); //die because of shrinking 
+	check = check && check_shrink(bot); //die because of shrinking
 	return check;
 }
 
@@ -77,12 +81,11 @@ int get_dist_from_cur(int x, int y) {
 Bot bfs_move() {
 	vector<Bot> pot_mov;
 	vector<vector<bool>> pass_tiles;
-	pass_tiles.resize(n);
-	for (int i = 0; i < n; i++) {
-		pass_tiles[i].resize(m);
-	}
+	pass_tiles.resize(n, vector<bool>(m, false));
+
 	queue<Bot> nxt;
 	nxt.push(myBot);
+	pass_tiles[myBot.x][myBot.y] = true;
 
 	while (!nxt.empty()) {
 		Bot cur = nxt.front();
@@ -99,7 +102,7 @@ Bot bfs_move() {
 					pot_mov.push_back(Bot(X, Y, myBot.name));
 					continue;
 				}
-				
+
 				nxt.push(Bot(X, Y, myBot.name));
 			}
 		}
@@ -114,18 +117,23 @@ Bot bfs_move() {
 		}
 
 		//safer option first
-		if (get_dist_from_border(tmp.x, tmp.y) < get_dist_from_border(res.x, res.y)) {
+		int border = get_border_srink();
+		if ((min(res.x - border, n - res.x - border) > min(tmp.x - border, n - tmp.x - border)) &&
+			(min(res.y - border, m - res.y - border) > min(tmp.y - border, m - tmp.y - border))
+		 ) {
 			res = tmp;
 			continue;
 		}
 		//aggresive option
-		if (get_dist_from_cur(tmp.x, tmp.y) < get_dist_from_cur(res.x, res.y)) {
+		else if (get_dist_from_cur(tmp.x, tmp.y) < get_dist_from_cur(res.x, res.y)) {
 			res = tmp;
 			continue;
 		}
-
 		//enemy tiles
-		if (board[tmp.x][tmp.y] >= 'A' && board[tmp.x][tmp.y] <= 'D') {
+		else if (
+			((board[res.x][res.y] == '.') || board[res.x][res.y] == myBot.name) &&
+			(board[tmp.x][tmp.y]) >= 'A' && (board[tmp.x][tmp.y] <= 'D') && board[tmp.x][tmp.y] != myBot.name)
+		{
 			res = tmp;
 		}
 	}
@@ -134,8 +142,6 @@ Bot bfs_move() {
 }
 
 void move(ofstream& fo, ofstream& dat_out) {
-	int backward_move = -1;
-
 	//prioritize not captured tile
 	if (lastMov >= 0 && lastMov <= 3 &&
 		check_range(Bot(myBot.x + nX[lastMov], myBot.y + nY[lastMov], myBot.name)) &&
@@ -150,7 +156,8 @@ void move(ofstream& fo, ofstream& dat_out) {
 			return;
 		}
 	}
-	
+
+	//surrounding 4 tiles
 	for (int i = (lastMov + 1) % 4; i != lastMov; i = (i + 1) % 4) {
 		int X = myBot.x + nX[i];
 		int Y = myBot.y + nY[i];
@@ -163,84 +170,78 @@ void move(ofstream& fo, ofstream& dat_out) {
 		}
 	}
 
-	//prioritize gtfo of the border
-	int nxt_mov = -1;
+	//get backward move
+	int backward_move = -1;
 	for (int i = 0; i < 4; i++) {
 		int X = myBot.x + nX[i];
 		int Y = myBot.y + nY[i];
 
-		//prioritize furthest from border
-		if (check_range(Bot(X, Y, myBot.name)) && 
-			((nxt_mov == -1) || 
-			(get_dist_from_border(X, Y) > get_dist_from_border(myBot.x + nX[nxt_mov], myBot.y + nY[nxt_mov]))
-			))
-		{
-
-			//avoid going back if half of the map is still around
-			if (X == lastX && Y == lastY) {
-				backward_move = i;
-				continue;
-			}
-
-			nxt_mov = i;
+		//avoid going back if half of the map is still around
+		if (check_range(Bot(X, Y, myBot.name)) && X == lastX && Y == lastY) {
+			backward_move = i;
+			continue;
 		}
-	}
-	
-	//haven't cover the backward case in here
-	if (nxt_mov != -1) {
-		fo << myBot.x + nX[nxt_mov] << ' ' << myBot.y + nY[nxt_mov] << '\n';
-		dat_out << nxt_mov << '\n';
-		dat_out << myBot.x << ' ' << myBot.y << '\n';
-		return;
 	}
 
 	//desperate move no.1
 	Bot res = bfs_move();
 	if (res.x != -1) {
-		int mov = 3;
+		int mov = -1;
 		for (int i = 3; i >= 0; i--) {
-			
+			if (i == backward_move) continue; //avoid going back if possible
+
 			int X = myBot.x + nX[i];
 			int Y = myBot.y + nY[i];
- 
-			if (check_range(Bot(X, Y, myBot.name)) && 
-				get_dist_from_cur(res.x - nX[i], res.y - nY[i]) < 
-				get_dist_from_cur(res.x - nX[mov], res.y - nY[mov])
-				) {
-				mov = i;
+
+			if (check_range(Bot(X, Y, myBot.name))) {
+				if (mov == -1) {mov = i; continue;}
+				if (get_dist_from_cur(X, Y) < get_dist_from_cur(myBot.x + nX[mov], myBot.y + nY[mov])) {
+					mov = i;
+				}
+				else if (get_dist_from_cur(X, Y) == get_dist_from_cur(myBot.x + nX[mov], myBot.y + nY[mov]))
+				{
+					//go a different direction
+					if ((mov % 2 != i % 2) && (i % 2 != lastMov % 2)) {
+						mov = i;
+					}
+				}
 			}
+
 		}
-		fo << myBot.x + nX[mov] << ' ' << myBot.y + nY[mov] << '\n';
-		dat_out << mov << '\n';
-		dat_out << myBot.x << ' ' << myBot.y << '\n';
-		return;
+		if (mov != -1) {
+			fo << myBot.x + nX[mov] << ' ' << myBot.y + nY[mov] << '\n';
+			dat_out << mov << '\n';
+			dat_out << myBot.x << ' ' << myBot.y << '\n';
+			return;
+		}
 	}
 
 	//backward case
-	if ((min(n, m) - get_border_srink() <= min(n, m) / 2) && backward_move != -1) {
+	if (backward_move != -1 && check_range(Bot(myBot.x + nX[backward_move], myBot.y + nY[backward_move], myBot.name))) {
 		fo << myBot.x + nX[backward_move] << ' ' << myBot.y + nY[backward_move] << '\n';
-		dat_out << nxt_mov << '\n';
+		dat_out << backward_move << '\n';
 		dat_out << myBot.x << ' ' << myBot.y << '\n';
 		return;
 	}
 
 	//het cuu
-	dat_out << 4 << '\n';
+	//cout << "Cau cuu hai cau\n";
+	int cau_cuu_ngai_hai_cau = 4;
+	dat_out << cau_cuu_ngai_hai_cau << '\n';
 	dat_out << myBot.x << ' ' << myBot.y << '\n';
-	fo << myBot.x << ' ' << myBot.x;
+	fo << myBot.x + nX[cau_cuu_ngai_hai_cau] << ' ' << myBot.y + nY[cau_cuu_ngai_hai_cau];
 }
 
 int rand_offset(int base) { //offset from center
-	bool neg = rand() % 2;
+	bool neg = rand <int> (0, 1);
 	int val = 100;
 	while (base / 2 + (((neg == 1) ? -1 : 1) * val) <= 1 || base / 2 + (((neg == 1) ? -1 : 1) * val) >= base - 1) {
-		val = rand() % 4;
+		val = rand <int> (0, 3);
 	}
 	return base / 2 + ((neg == 1)? -1 : 1) * val;
 }
 
 int main() {
-	srand(time(NULL));
 	ifstream fi;
 	fi.open("MAP.INP");
 
@@ -256,8 +257,17 @@ int main() {
 		lastX = lastY = 0;
 	}
 	else {
-		area_length = 3;
-		//cout << "Succ to read yo shit\n";
+		area_length = 4;
+
+		//panic mode
+		if (area_length > 3 && (min(n, m) - get_border_srink() <= min(n, m) / 2)) {
+			area_length = 3;
+		}
+
+		if (area_length > 2 && (min(n, m) - get_border_srink() <= min(n, m) / 3)) {
+			area_length = 2;
+		}
+
 		if ((p % area_length == 0) || (lastMov == 4)) {
 			if (lastMov == 4) {
 				lastMov = 0;
@@ -267,11 +277,6 @@ int main() {
 			}
 		}
 
-		//panic mode
-		if (area_length > 2 && (min(n, m) - get_border_srink() <= min(n, m) / 3)) {
-			area_length = 2;
-		}
-		
 		dat_input >> lastX >> lastY;
 	}
 	dat_input.close();
@@ -290,13 +295,13 @@ int main() {
 		tar.push_back(Bot(x, y, name));
 	}
 
-	board.resize(n);
+	board.resize(n, vector<char>(m, '.'));
 	for (int i = 0; i < n; i++) {
-		board[i].resize(m);
 		for (int j = 0; j < m; j++) {
 			fi >> board[i][j];
 		}
 	}
+	fi.close();
 
 	if (myBot.x < 0) {
 		do {
@@ -310,7 +315,6 @@ int main() {
 		move(fo, dat_output);
 	}
 
-	fi.close();
 	fo.close();
 	dat_output.close();
 	return 0;
