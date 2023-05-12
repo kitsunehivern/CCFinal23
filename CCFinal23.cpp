@@ -119,13 +119,17 @@ int main() {
 
 				fout << n << " " << m << " " << k << " " << t << "\n";
 				fout << last_move[i].first << " " << last_move[i].second << " " << char(i + 'A') << "\n";
-				fout << std::count(alive.begin(), alive.end(), true) - 1 << "\n";
+				fout << p - 1 << "\n";
 				for (int j = 0; j < p; j++) {
-					if (j == i || !alive[j]) {
+					if (j == i) {
 						continue;
 					}
-
-					fout << last_move[j].first << " " << last_move[j].second << " " << char(j + 'A') << "\n";
+					
+					if (!alive[j]) {
+						fout << -1 << " " << -1 << " " << char(j + 'A') << "\n";
+					} else {
+						fout << last_move[j].first << " " << last_move[j].second << " " << char(j + 'A') << "\n";
+					}
 				}
 
 				for (int i = 0; i < n; i++) {

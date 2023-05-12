@@ -55,6 +55,11 @@ bool check_shrink(const Bot& bot) {
 }
 
 bool check_range(const Bot& bot) {
+    if (0 > bot.x || bot.x > n - 1 || 0 > bot.y || bot.y > m - 1) {
+        return false;
+    }
+
+    assert(0 <= bot.x && bot.x <= n - 1 && 0 <= bot.y && bot.y <= m - 1);
 	bool check = true;
 	int border = get_border_srink();
 	check = check && (bot.x >= get_border_srink()) && (bot.x < (n - get_border_srink())); //x edges
@@ -68,12 +73,33 @@ bool check_range(const Bot& bot) {
 }
 
 int get_dist_from_border(int x, int y) {
+    assert(0 <= x && x <= n - 1 && 0 <= y && y <= m - 1);
 	int border = get_border_srink();
-	return (x - border) + (n - border - x) + (y - border) + (m - border - y);
+	return min(x - border, n - border - x) + min(y - border, m - border - y);
 }
 
 int get_dist_from_cur(int x, int y) {
+    assert(0 <= x && x <= n - 1 && 0 <= y && y <= m - 1);
 	return abs(x - myBot.x) + abs(y - myBot.y);
+}
+
+int get_dist_from_point(int a, int b, int x, int y) {
+    assert(0 <= x && x <= n - 1 && 0 <= y && y <= m - 1);
+	return abs(x - a) + abs(y - b);
+}
+
+int count_death(int x, int y) {
+    assert(0 <= x && x <= n - 1 && 0 <= y && y <= m - 1);
+	int res = 0;
+	int border = get_border_srink();
+	for (int i = x - 2; i <= x; i++) {
+		for (int j = y - 2; j <= y; j++) {
+			if (!check_range(Bot(i, j, myBot.name))) {
+				res++;
+			}
+		}
+	}
+	return res;
 }
 
 //find the nearest tiles that haven't been captured/captured by others player that's also save to move to
@@ -98,7 +124,7 @@ Bot bfs_move() {
 			if (check_range(Bot(X, Y, myBot.name)) && !pass_tiles[X][Y]) {
 				pass_tiles[X][Y] = true;
 
-				if (board[X][Y] != 'A' + (myBot.name - 'A')) {
+				if (board[X][Y] != myBot.name) {
 					pot_mov.push_back(Bot(X, Y, myBot.name));
 					continue;
 				}
@@ -145,7 +171,9 @@ void move(ofstream& fo, ofstream& dat_out) {
 	//prioritize not captured tile
 	if (lastMov >= 0 && lastMov <= 3 &&
 		check_range(Bot(myBot.x + nX[lastMov], myBot.y + nY[lastMov], myBot.name)) &&
-		(board[myBot.x + nX[lastMov]][myBot.y + nY[lastMov]] != 'A' + (myBot.name - 'A')))
+		(board[myBot.x + nX[lastMov]][myBot.y + nY[lastMov]] != myBot.name) &&
+		get_dist_from_border(myBot.x + nX[lastMov], myBot.y + nY[lastMov]) >= ((m + n - (p % (k - 1)) - 2 * get_border_srink()) / 3)
+	)
 	{
 		int X = myBot.x + nX[lastMov];
 		int Y = myBot.y + nY[lastMov];
@@ -162,7 +190,7 @@ void move(ofstream& fo, ofstream& dat_out) {
 		int X = myBot.x + nX[i];
 		int Y = myBot.y + nY[i];
 
-		if (check_range(Bot(X, Y, myBot.name)) && board[X][Y] != 'A' - (myBot.name - 'A')) {
+		if (check_range(Bot(X, Y, myBot.name)) && board[X][Y] != myBot.name) {
 			fo << X << ' ' << Y << '\n';
 			dat_out << i << '\n';
 			dat_out << myBot.x << ' ' << myBot.y << '\n';
@@ -195,13 +223,12 @@ void move(ofstream& fo, ofstream& dat_out) {
 
 			if (check_range(Bot(X, Y, myBot.name))) {
 				if (mov == -1) {mov = i; continue;}
-				if (get_dist_from_cur(X, Y) < get_dist_from_cur(myBot.x + nX[mov], myBot.y + nY[mov])) {
+				if (get_dist_from_point(X, Y, res.x, res.y) < get_dist_from_point(myBot.x + nX[mov], myBot.y + nY[mov], res.x, res.y)) {
 					mov = i;
 				}
-				else if (get_dist_from_cur(X, Y) == get_dist_from_cur(myBot.x + nX[mov], myBot.y + nY[mov]))
+				else if (get_dist_from_point(X, Y, res.x, res.y) == get_dist_from_point(myBot.x + nX[mov], myBot.y + nY[mov], res.x, res.y))
 				{
-					//go a different direction
-					if ((mov % 2 != i % 2) && (i % 2 != lastMov % 2)) {
+					if (count_death(X, Y) < count_death(myBot.x + nX[mov], myBot.y + nY[mov])) {
 						mov = i;
 					}
 				}
@@ -236,7 +263,7 @@ int rand_offset(int base) { //offset from center
 	bool neg = rand <int> (0, 1);
 	int val = 100;
 	while (base / 2 + (((neg == 1) ? -1 : 1) * val) <= 1 || base / 2 + (((neg == 1) ? -1 : 1) * val) >= base - 1) {
-		val = rand <int> (0, 3);
+		val = rand <int> (2, 4);
 	}
 	return base / 2 + ((neg == 1)? -1 : 1) * val;
 }
@@ -245,12 +272,10 @@ int main() {
 	ifstream fi;
 	fi.open("MAP.INP");
 
-	ofstream fo;
-	fo.open("move.out");
+	ofstream fo("MOVE.OUT");
 	fi >> n >> m >> k >> p;
 
-	ifstream dat_input;
-	dat_input.open("state.dat");
+	ifstream dat_input("STATE.DAT");
 	if (!(dat_input >> lastMov)) {
 		//cout << "Failed to read yo shit\n";
 		lastMov = -1;
@@ -262,10 +287,6 @@ int main() {
 		//panic mode
 		if (area_length > 3 && (min(n, m) - get_border_srink() <= min(n, m) / 2)) {
 			area_length = 3;
-		}
-
-		if (area_length > 2 && (min(n, m) - get_border_srink() <= min(n, m) / 3)) {
-			area_length = 2;
 		}
 
 		if ((p % area_length == 0) || (lastMov == 4)) {
@@ -281,8 +302,7 @@ int main() {
 	}
 	dat_input.close();
 
-	ofstream dat_output;
-	dat_output.open("state.dat", ofstream::out | ofstream::trunc);
+	ofstream dat_output("STATE.DAT");
 
 	int x, y;
 	char name;
@@ -303,13 +323,16 @@ int main() {
 	}
 	fi.close();
 
-	if (myBot.x < 0) {
+	if (p == 0) {
 		do {
 			x = rand_offset(n); y = rand_offset(m);
 		} while (!check_range(Bot(x, y, name)));
 		fo << x << ' ' << y << '\n';
 		dat_output << 4 << '\n';
 		dat_output << x << ' ' << y << '\n';
+	}
+	else if (myBot.x == -1) {
+
 	}
 	else {
 		move(fo, dat_output);
